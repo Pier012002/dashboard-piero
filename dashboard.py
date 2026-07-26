@@ -3,15 +3,14 @@ from conexiones import cargar_datos
 from indicadores import *
 from graficos import *
 
-# 1. Configuración de página (debe ser la primera orden de Streamlit)
+# 1. Configuración de página
 st.set_page_config(page_title="Wigo Motors", layout="wide")
 
-# 2. Manejo de estado de autenticación
+# 2. Control de estado de autenticación
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
 def check_credentials(usuario, password):
-    # Aquí puedes cambiar tus credenciales o conectarlas a una BD / st.secrets
     USUARIOS = {
         "admin": "1234",
         "piero": "wigo2026"
@@ -33,14 +32,10 @@ def mostrar_login():
             else:
                 st.error("Usuario o contraseña incorrectos")
 
-# 3. Control de flujo de la aplicación
+# 3. BLOQUEO ABSOLUTO: Si no está autenticado, muestra solo el login y detiene la ejecución
 if not st.session_state.autenticado:
     mostrar_login()
-else:
-    # Botón para cerrar sesión en la barra lateral
-    if st.sidebar.button("Cerrar sesión"):
-        st.session_state.autenticado = False
-        st.rerun()
+    st.stop()
 
 df = cargar_datos()
 # CONFIGURACIÓN DE DASHBOARD CON STREAMLIT:
@@ -53,30 +48,44 @@ st.set_page_config(page_title = "Wigo Motors",
 st.title("WIGO MOTORS S.A.C.")                      
 st.subheader("Buscador comercial") 
 
-
-st.sidebar.header("Buscador")
-tipo_busqueda = st.sidebar.selectbox("Seleccione tipo de búsqueda", ["Marca", "Asesor comercial", "Sede"])  
-
+st.sidebar.header("Filtros")
 
 df_filtrado = df.copy()
 
 # FILTRO POR MARCA:
 
+valor1 = st.sidebar.selectbox("Seleccionar marca", df["marca"].unique()) # Mostrar las marcas disponibles y sin repetir
+df_filtrado = df[df["marca"] == valor1]                                   # Filtrar búsqueda por marca  
+ 
+valor2 = st.sidebar.selectbox("Seleccionar asesor", df["asesor_comercial"].unique()) # Mostrar las marcas disponibles y sin repetir
+df_filtrado = df[df["asesor_comercial"] == valor2]                                   # Filtrar búsqueda por marca  
+    
+valor3 = st.sidebar.selectbox("Seleccionar sede", df["tienda"].unique()) # Mostrar las marcas disponibles y sin repetir
+df_filtrado = df[df["tienda"] == valor3]
 
-if tipo_busqueda == "Marca":
-    valor = st.sidebar.selectbox("Seleccionar marca", df["marca"].unique()) # Mostrar las marcas disponibles y sin repetir
-    df_filtrado = df[df["marca"] == valor]                                   # Filtrar búsqueda por marca  
+valor4 = st.sidebar.selectbox("Seleccionar metodo de pago", df["metodo_pago"].unique())
+df_filtrado = df[df["metodo_pago"] == valor4]
+
+
+# Obtenemos el precio mínimo y máximo real de la base de datos para los límites del slider
+precio_min_posible = float(df["precio_venta"].min())
+precio_max_posible = float(df["precio_venta"].max())
     
-elif tipo_busqueda == "Asesor comercial":
-    valor = st.sidebar.selectbox("Seleccionar asesor", df["asesor_comercial"].unique()) # Mostrar las marcas disponibles y sin repetir
-    df_filtrado = df[df["asesor_comercial"] == valor]                                   # Filtrar búsqueda por marca  
+    # Creamos el slider de rango (al pasarle una tupla en 'value', Streamlit activa los dos selectores de rango)
+rango_precios = st.sidebar.slider(
+    "Seleccione el rango de precios (S/)",
+    min_value=precio_min_posible,
+    max_value=precio_max_posible,
+    value=(precio_min_posible, precio_max_posible), # Rango inicial por defecto (todo seleccionado)
+    step=100.0 # Incremento del slider
+    )
     
-elif tipo_busqueda == "Sede":
-    valor = st.sidebar.selectbox("Seleccionar sede", df["tienda"].unique()) # Mostrar las marcas disponibles y sin repetir
-    df_filtrado = df[df["tienda"] == valor]
+    # Filtramos el dataframe conservando solo los precios que se encuentren dentro del rango elegido
+df_filtrado = df[(df["precio_venta"] >= rango_precios[0]) & (df["precio_venta"] <= rango_precios[1])]
 
 st.success(f"Registros encontrados: {len(df_filtrado)}")        # Mostrar la cantidad de filas encontradas (color verde)
 st.dataframe(df_filtrado)
+
 
 # INDICADORES GENERALES: 
 
