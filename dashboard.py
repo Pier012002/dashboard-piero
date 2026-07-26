@@ -3,22 +3,22 @@ from conexiones import cargar_datos
 from indicadores import *
 from graficos import *
 
-# 1. Configuración de página
+# Configuración de página
 st.set_page_config(page_title="Wigo Motors", layout="wide")
 
-# 2. Control de estado de autenticación
+# estado de autenticación
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
 def check_credentials(usuario, password):
     USUARIOS = {
-        "admin": "1234",
+        "User1": "dash",
         "piero": "wigo2026"
     }
     return USUARIOS.get(usuario) == password
 
 def mostrar_login():
-    st.title("Inicie sesión para continuar - Wigo Motors")
+    st.title("Inciar sesión para continuar - Wigo Motors")
     with st.form("form_login"):
         usuario = st.text_input("Usuario")
         password = st.text_input("Contraseña", type="password")
@@ -44,11 +44,34 @@ df = cargar_datos()
 st.set_page_config(page_title = "Wigo Motors", 
                    layout="wide")      
 
+# BOTÓN DE CONFIGURACIÓN Y ENCABEZADO SIDEBAR
+with st.sidebar:
+    col_titulo, col_config = st.columns([0.8, 0.2])
+    
+    with col_titulo:
+        st.header("Filtros")
+        
+    with col_config:
+        # Popover con icono de tuerca
+        with st.popover("⚙️"):
+            st.markdown("### Configuración")
+            
+            # Opciones de personalización
+            st.toggle(
+                "Mostrar gráficos",
+                value=True,
+                key="mostrar_graficos"
+            )
+            
+            st.divider()
+            
+            # Botón de cerrar sesión
+            if st.button("🚪 Cerrar sesión", use_container_width=True):
+                st.session_state.autenticado = False
+                st.rerun()
 
 st.title("WIGO MOTORS S.A.C.")                      
 st.subheader("Buscador comercial") 
-
-st.sidebar.header("Filtros")
 
 df_filtrado = df.copy()
 
@@ -111,5 +134,6 @@ c5, c6, c7, c8 = st.columns(4)
 c5.metric(f"Precio máximo ({modelocon_mayorprecio})", f"S/{precio_maximo(df_filtrado):,.2f}")
 c6.metric(f"Precio mínimo ({modelocon_menorprecio})", f"S/{precio_minimo(df_filtrado):,.2f}")
 
-st.plotly_chart(grafico_ventas_marca(df_filtrado))
-st.plotly_chart(grafico_precio_promedio(df_filtrado))
+if st.session_state.get("mostrar_graficos", True):
+    st.plotly_chart(grafico_ventas_marca(df_filtrado))
+    st.plotly_chart(grafico_precio_promedio(df_filtrado))
