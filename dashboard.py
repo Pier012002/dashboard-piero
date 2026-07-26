@@ -3,6 +3,45 @@ from conexiones import cargar_datos
 from indicadores import *
 from graficos import *
 
+# 1. Configuración de página (debe ser la primera orden de Streamlit)
+st.set_page_config(page_title="Wigo Motors", layout="wide")
+
+# 2. Manejo de estado de autenticación
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
+
+def check_credentials(usuario, password):
+    # Aquí puedes cambiar tus credenciales o conectarlas a una BD / st.secrets
+    USUARIOS = {
+        "admin": "1234",
+        "piero": "wigo2026"
+    }
+    return USUARIOS.get(usuario) == password
+
+def mostrar_login():
+    st.title("Acceso al Dashboard - Wigo Motors")
+    with st.form("form_login"):
+        usuario = st.text_input("Usuario")
+        password = st.text_input("Contraseña", type="password")
+        submit = st.form_submit_button("Iniciar sesión")
+
+        if submit:
+            if check_credentials(usuario, password):
+                st.session_state.autenticado = True
+                st.success("Acceso concedido")
+                st.rerun()
+            else:
+                st.error("Usuario o contraseña incorrectos")
+
+# 3. Control de flujo de la aplicación
+if not st.session_state.autenticado:
+    mostrar_login()
+else:
+    # Botón para cerrar sesión en la barra lateral
+    if st.sidebar.button("Cerrar sesión"):
+        st.session_state.autenticado = False
+        st.rerun()
+
 df = cargar_datos()
 # CONFIGURACIÓN DE DASHBOARD CON STREAMLIT:
 
