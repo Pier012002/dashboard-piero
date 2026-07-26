@@ -18,7 +18,7 @@ def check_credentials(usuario, password):
     return USUARIOS.get(usuario) == password
 
 def mostrar_login():
-    st.title("Acceso al Dashboard - Wigo Motors")
+    st.title("Inicie sesión para continuar - Wigo Motors")
     with st.form("form_login"):
         usuario = st.text_input("Usuario")
         password = st.text_input("Contraseña", type="password")
